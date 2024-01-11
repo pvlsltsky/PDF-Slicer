@@ -7,17 +7,13 @@ from PySide6.QtCore import Qt, QBuffer, QByteArray, QIODevice
 from PySide6.QtPdfWidgets import *
 from PySide6.QtPdf import *
 
-from pdf_merger import pdfBuffer
+from controller import testPdfBuffer
 
 class PDFPanel(QGroupBox):
     def __init__(self, parent) -> None:
         super().__init__(parent)
         self.setTitle("PDF preview")
         self.doc = QPdfDocument(self)
-        ba = QByteArray(pdfBuffer())
-        buffer = QBuffer(ba)
-        buffer.open(QIODevice.OpenModeFlag.ReadOnly)
-        self.doc.load(buffer)
         self.pdf_view = QPdfView(self)
         self.pdf_view.setPageMode(QPdfView.PageMode.MultiPage)
         self.pdf_view.setZoomMode(QPdfView.ZoomMode.FitInView)
@@ -26,8 +22,8 @@ class PDFPanel(QGroupBox):
         layout.addWidget(self.pdf_view)
         layout.setContentsMargins(2,2,2,2)
         self.setLayout(layout) 
+        # self.refreshView()
     
-
     def resizeEvent(self, event: QResizeEvent) -> None:
         res = super().resizeEvent(event)
         diff = self.width() - self.pdf_view.width()
@@ -36,6 +32,12 @@ class PDFPanel(QGroupBox):
                                     self.pdf_view.y(),
                                     self.width() - 16,
                                     self.pdf_view.height()) 
+            
+    def refreshView(self):
+        ba = QByteArray(testPdfBuffer())
+        buffer = QBuffer(ba)
+        buffer.open(QIODevice.OpenModeFlag.ReadOnly)
+        self.doc.load(buffer)
 
 class MainWindow(QWidget):
 

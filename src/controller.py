@@ -1,27 +1,33 @@
 import io
 from PyPDF2 import PdfReader, PdfWriter
+from PyPDF2._utils import StrByteType
 
+available_files ={}
 
+slicer_lines = []
 
-def read(writer):
+def checkPdfDonor(fullpath : str) -> int:
+    res = available_files.get(fullpath, 0)
+    if not res:
+        try:
+            reader = PdfReader(fullpath)
+            res = len(reader.pages)
+            available_files.update(fullpath, res)
+            reader
+            return res
+        except:
+            return 0    
+    return res
+        
+def testPdfBuffer() -> bytearray:
+    writer = PdfWriter()
     fullpath = "/Users/pavelslutsky/Downloads/tofes1514---spitted.pdf"
     reader = PdfReader(fullpath)
     writer.append(reader, [2, 0, 1, 2, 0])
-
-
-def pdfBuffer():
-
-    writer = PdfWriter()
-    read(writer)
     output = io.BytesIO()
     writer.write(output)
     output.seek(0)
     return output.read()
-
-# with open("/Users/pavelslutsky/Downloads/tofes1514---spitted3.pdf", "wb") as f:
-#     f.write(output.getbuffer())
-
-
 
 # merger = PdfWriter()
 

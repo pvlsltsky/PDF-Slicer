@@ -28,37 +28,49 @@ def testPdfBuffer() -> bytearray:
     output.seek(0)
     return output.read()
 
-def addLineToController(fullpath : str, p_from : int, p_to : int, index: int=-1) -> None:
-    if index < 0 or index >= len(slicer_lines):
-        slicer_lines.append((fullpath, p_from, p_to))
+def compose(list_of_donors) -> PdfWriter:
+    if len(list_of_donors) > 0:
+        # print(list_of_donors)
+        merger = PdfWriter()
+        # add the pages of donor documents to output
+        for (file, pf, pt) in list_of_donors:
+            merger.append(file, pages=(pf-1, pt))
+        return merger
     else:
-        slicer_lines.insert(index, (fullpath, p_from, p_to))
+        return None
 
-def removeLineFromController(index : int) -> None:
-    if index >= 0 and index < len(slicer_lines):
-        del slicer_lines[index]
+def compose_to_file(list_of_donors, fullpath) -> bytearray:
+    try:
+        if isinstance(merger, PdfWriter):
+            merger = compose(list_of_donors)
+            output = open(fullpath, "wb")
+            merger.write(output)
+            # Close File Descriptors
+            merger.close()
+            output.close()
+            return True
+        else:
+            return False
+    except:
+        print("PDF file creation failed")
+        return False
 
+def compose_to_buffer(list_of_donors) -> bytearray:
+    try:
+        merger = compose(list_of_donors)
+        if isinstance(merger, PdfWriter):
+            output = io.BytesIO()
+            merger.write(output)
+            output.seek(0)
+            return output.read()
+        else:
+            return None
+    except:
+        print("PDF stream creation failed")
+        return None
 
-
-# merger = PdfWriter()
-
-# input1 = open("document1.pdf", "rb")
-# input2 = open("document2.pdf", "rb")
-# input3 = open("document3.pdf", "rb")
-
-# # add the first 3 pages of input1 document to output
-# merger.append(fileobj=input1, pages=(0, 3))
-
-# # insert the first page of input2 into the output beginning after the second page
-# merger.merge(position=2, fileobj=input2, pages=(0, 1))
-
-# # append entire input3 document to the end of the output document
-# merger.append(input3)
-
-# # Write to an output PDF document
-# output = open("document-output.pdf", "wb")
-# merger.write(output)
-
-# # Close File Descriptors
-# merger.close()
-# output.close()
+if __name__ == "__main__":
+    ld = [("/Users/pavelslutsky/Documents/download.pdf", 2, 2), ("/Users/pavelslutsky/Documents/download.pdf", 1, 1)]
+    # ld = [("/Users/pavelslutsky/Documents/download.pdf", 2, 2)]
+    compose_to_file(ld, "/Users/pavelslutsky/Documents/test4.pdf")
+    pass

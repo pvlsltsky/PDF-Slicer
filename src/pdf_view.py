@@ -4,15 +4,14 @@ from PySide6.QtWidgets import (QApplication, QWidget, QFormLayout,
                                QGroupBox, QVBoxLayout)
 
 from PySide6.QtCore import Qt, QBuffer, QByteArray, QIODevice
-from PySide6.QtPdfWidgets import *
-from PySide6.QtPdf import *
+from PySide6.QtPdfWidgets import QPdfView
+from PySide6.QtPdf import QPdfDocument
 
-from controller import testPdfBuffer
+from controller import compose_to_buffer
 
 class PDFPanel(QGroupBox):
     def __init__(self, parent) -> None:
         super().__init__(parent)
-        self.setTitle("PDF preview")
         self.doc = QPdfDocument(self)
         self.pdf_view = QPdfView(self)
         self.pdf_view.setPageMode(QPdfView.PageMode.MultiPage)
@@ -22,7 +21,7 @@ class PDFPanel(QGroupBox):
         layout.addWidget(self.pdf_view)
         layout.setContentsMargins(2,2,2,2)
         self.setLayout(layout) 
-        # self.refreshView()
+        self.refreshView([])
     
     def resizeEvent(self, event: QResizeEvent) -> None:
         res = super().resizeEvent(event)
@@ -33,11 +32,15 @@ class PDFPanel(QGroupBox):
                                     self.width() - 16,
                                     self.pdf_view.height()) 
             
-    def refreshView(self):
-        ba = QByteArray(testPdfBuffer())
-        buffer = QBuffer(ba)
-        buffer.open(QIODevice.OpenModeFlag.ReadOnly)
-        self.doc.load(buffer)
+    def refreshView(self, list_of_donors):
+        barr = compose_to_buffer(list_of_donors)
+        if barr is not None:
+            ba = QByteArray(barr)
+            buffer = QBuffer(ba)
+            buffer.open(QIODevice.OpenModeFlag.ReadOnly)
+            self.doc.load(buffer)
+        else:
+            self.doc.close()
 
 class MainWindow(QWidget):
 

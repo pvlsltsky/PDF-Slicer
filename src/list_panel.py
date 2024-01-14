@@ -2,17 +2,17 @@ from PySide6.QtWidgets import (QApplication, QTreeWidget, QTreeWidgetItem,
                                QHeaderView, QLabel, QPushButton,
                                QFileDialog, QSpinBox)
 from PySide6.QtGui import QPixmap, QPainter, QColor
-from PySide6.QtCore import Qt, QPoint, QRect
+from PySide6.QtCore import Qt, QRect
 import sys
 import os.path
-from controller import (checkPdfDonor, addLineToController, removeLineFromController)
+from controller import checkPdfDonor, compose_to_file
 from functools import partial
-
+from pdf_view import PDFPanel
 
 user_dir = os.path.expanduser("~")
 
 class MyTreeWidget(QTreeWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, pdf_panel=None):
         super().__init__(parent)
         # Set column count and headers
         self.setColumnCount(6)
@@ -40,6 +40,7 @@ class MyTreeWidget(QTreeWidget):
         self.setAcceptDrops(True)
         self.setDragDropMode(QTreeWidget.DragDropMode.InternalMove)
 
+        self.pdf_panel = pdf_panel
         # Connect the custom slot to the selectionChanged signal
         # Needed to prevent header line and input line from selection
         self.selectionModel().selectionChanged.connect(self.handleSelectionChange)
@@ -72,6 +73,7 @@ class MyTreeWidget(QTreeWidget):
         self.save_btn.setToolTip("Save file")
         self.save_btn.setEnabled(False)
         self.setItemWidget(self.new_pdf_row, 2, self.save_btn)
+        self.save_btn.clicked.connect(self.handleSaveBtnClicked)
         # total pages in file
         self.new_total = QLabel()
         self.new_total.setMargin(5)
@@ -80,9 +82,10 @@ class MyTreeWidget(QTreeWidget):
         self.setItemWidget(self.new_pdf_row, 5, self.new_total)
 
     def addDonorRow(self, fullpath : str, from_p : int, to_p : int) -> None:
+        total_p = to_p - from_p + 1
         donor_row = QTreeWidgetItem(["", fullpath, "", 
                                     str(from_p), str(to_p), 
-                                    f"{(to_p - from_p + 1)} pages" ])
+                                    f"{total_p} page" + ("" if total_p == 1 else "s") ])
         self.new_pdf_row.insertChild(self.new_pdf_row.childCount() - 1, donor_row)
         self.setupDonorButtons(donor_row)
         donor_row.setToolTip(1, fullpath)
@@ -113,7 +116,7 @@ class MyTreeWidget(QTreeWidget):
         self.init_pages_to = QSpinBox(self)
         # self.init_pages_to.setPrefix("to: ")
         self.setItemWidget(self.init_row, 4, self.init_pages_to)
-        self.init_pages_to.valueChanged.connect(self.calculateTotal)
+        self.init_pages_to.valueChanged.connect(self.calculateInitTotal)
         # total label
         self.init_total = QLabel()
         self.init_total.setMargin(5)
@@ -122,8 +125,6 @@ class MyTreeWidget(QTreeWidget):
         self.resetInitialRow()
 
     def resetInitialRow(self):
-        
-        # Update data
         self.dir = user_dir
         # Update elements
         self.init_fullpath.setText("Select donor PDF file...")
@@ -135,7 +136,7 @@ class MyTreeWidget(QTreeWidget):
         self.init_pages_to.setMinimum(0)
         self.init_pages_to.setValue(0)
         self.init_pages_to.setEnabled(False)
-        self.calculateTotal()
+        self.init_total.setText("")
 
     def setFile(self, fullpath : str) -> bool:
         fullpath = fullpath.strip()
@@ -166,28 +167,31 @@ class MyTreeWidget(QTreeWidget):
         fname = QFileDialog.getOpenFileName(self, 'Add file', self.init_dir, "PDF files (*.pdf)")
         if len(fname[0]) > 0 and len(fname[1]) > 0:
             self.setFile(fname[0])
+    
+    def handleSaveBtnClicked(self):
+        fname = QFileDialog.getSaveFileName(self, '*.pdf', self.init_dir, "PDF files (*.pdf)")
+        if len(fname[0]) > 0 and len(fname[1]) > 0:
+            compose_to_file(self.buildList(), fname[0])
 
     def updateTo(self):
         self.init_pages_to.setMinimum(self.init_pages_from.value())
-        self.calculateTotal()   
+        self.calculateInitTotal()   
 
-    def calculateTotal(self):
+    def calculateInitTotal(self):
         pages_diff = int(self.init_pages_to.value()) - int(self.init_pages_from.value())
         self.init_total_int = 0 if self.init_pages_to.value() == 0 else pages_diff + 1
-        self.init_total.setText(f"{self.init_total_int} pages")
+        self.init_total.setText(f"{self.init_total_int} page" + ("" if self.init_total_int == 1 else "s"))
 
     def handleSelectionChange(self, selected, deselected):
         self.new_pdf_row.setSelected(False)
         self.init_row.setSelected(False)
        
     def updateNewFilePages(self):
-        self.new_total.setText(f"{self.new_total_int} pages")
+        self.new_total.setText(f"{self.new_total_int} page" + ("" if self.init_total_int == 1 else "s"))
         self.save_btn.setEnabled(self.new_total_int > 0)
+        self.refreshView()
 
     def initDonorRow(self):
-        addLineToController(self.init_fullpath.text(), 
-                            self.init_pages_from.value(), 
-                            self.init_pages_to.value())
         self.addDonorRow(self.init_fullpath.text(),
                          self.init_pages_from.value(), 
                          self.init_pages_to.value())
@@ -200,7 +204,6 @@ class MyTreeWidget(QTreeWidget):
 
     def handleRemoveRowClicked(self, donor_row : QTreeWidgetItem) -> None:
         # handle for remove button clicked event
-        removeLineFromController(self.new_pdf_row.indexOfChild(donor_row))
         pages = [int(s) for s in donor_row.text(5).split() if s.isdigit()]
         self.new_total_int -= int(pages[0])
         self.new_pdf_row.removeChild(donor_row)
@@ -292,6 +295,7 @@ class MyTreeWidget(QTreeWidget):
             target_index = self.new_pdf_row.indexOfChild(self.drop_item) + self.drop_shift
             self.new_pdf_row.insertChild(target_index, dragged_item)
             self.setupDonorButtons(dragged_item)
+            self.refreshView()
 
         self.drop_item = None
         self.drop_position = None
@@ -299,8 +303,19 @@ class MyTreeWidget(QTreeWidget):
         self.pressed_item_index = None
         self.viewport().repaint()
 
+    def buildList(self):
+        donor_list = []
+        for idx in range(self.new_pdf_row.childCount() - 1):
+            donor = self.new_pdf_row.child(idx)
+            donor_list.append((donor.text(1), 
+                               int(donor.text(3)),
+                               int(donor.text(4))))
+        return donor_list
 
-            
+    def refreshView(self):
+        if isinstance(self.pdf_panel, PDFPanel):
+                self.pdf_panel.refreshView(self.buildList())        
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
 

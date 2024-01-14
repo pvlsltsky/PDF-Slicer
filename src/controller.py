@@ -2,18 +2,17 @@ import io
 from PyPDF2 import PdfReader, PdfWriter
 from PyPDF2._utils import StrByteType
 
-available_files ={}
+available_files = dict()
 
 slicer_lines = []
 
 def checkPdfDonor(fullpath : str) -> int:
     res = available_files.get(fullpath, 0)
-    if not res:
+    if res == 0:
         try:
             reader = PdfReader(fullpath)
             res = len(reader.pages)
-            available_files.update(fullpath, res)
-            reader
+            available_files[fullpath] = res
             return res
         except:
             return 0    
@@ -28,6 +27,18 @@ def testPdfBuffer() -> bytearray:
     writer.write(output)
     output.seek(0)
     return output.read()
+
+def addLineToController(fullpath : str, p_from : int, p_to : int, index: int=-1) -> None:
+    if index < 0 or index >= len(slicer_lines):
+        slicer_lines.append((fullpath, p_from, p_to))
+    else:
+        slicer_lines.insert(index, (fullpath, p_from, p_to))
+
+def removeLineFromController(index : int) -> None:
+    if index >= 0 and index < len(slicer_lines):
+        del slicer_lines[index]
+
+
 
 # merger = PdfWriter()
 

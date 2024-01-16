@@ -11,6 +11,14 @@ from pdf_view import PDFPanel
 
 user_dir = os.path.expanduser("~")
 
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.realpath(os.path.join(base_path, relative_path))
+
 class MyTreeWidget(QTreeWidget):
     def __init__(self, parent=None, pdf_panel=None):
         super().__init__(parent)
@@ -61,10 +69,11 @@ class MyTreeWidget(QTreeWidget):
     def addTitleRow(self) -> None:
         self.new_pdf_row = QTreeWidgetItem(self, ["", "New awesome PDF file", "", "", "", ""])
         self.new_pdf_row.setExpanded(True)
-        self.itemExpanded.connect(self.handleItemExpanded)
+        self.itemCollapsed.connect(self.handleItemCollapsed)
         # PDF icon
-        image_dir = os.path.dirname(__file__)
-        image_path = os.path.relpath(os.path.join(image_dir, "../resources/pdf_color_2.png"))
+        # image_dir = os.path.dirname(__file__)
+        # image_path = os.path.relpath(os.path.join(image_dir, "../resources/pdf_color_2.png"))
+        image_path = resource_path("./resources/pdf_color_2.png")
         print(image_path)
         pixmap = QPixmap(image_path)
         icon_lbl = QLabel()
@@ -159,7 +168,7 @@ class MyTreeWidget(QTreeWidget):
         else:
             self.resetInitialRow()
 
-    def handleItemExpanded(self, item : QTreeWidgetItem):
+    def handleItemCollapsed(self, item : QTreeWidgetItem):
         # Ensure the item remains expanded
         item.setExpanded(True)
 

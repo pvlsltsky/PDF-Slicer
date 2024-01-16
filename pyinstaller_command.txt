@@ -1,0 +1,9 @@
+pyinstaller --onefile \
+            --windowed \
+            --name='PDF Slicer' \
+            --icon='./resources/slicer.ico' \
+            --paths "./.venv/lib/python3.11/site-packages" \
+            --hidden-import PySide6 \
+            --hidden-import PyPDF2 \
+            --add-data='./resources/pdf_color_2.png:./resources' \
+            './src/main.py'

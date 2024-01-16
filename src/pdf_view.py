@@ -7,7 +7,7 @@ from PySide6.QtCore import QBuffer, QByteArray, QIODevice
 from PySide6.QtPdfWidgets import QPdfView
 from PySide6.QtPdf import QPdfDocument
 
-from controller import compose_to_buffer
+from pdf_controller import compose_to_buffer
 
 class PDFPanel(QGroupBox):
     def __init__(self, parent) -> None:
@@ -42,8 +42,9 @@ class PDFPanel(QGroupBox):
         else:
             self.doc.close()
 
-class MainWindow(QWidget):
 
+# For test purpose only 
+class MainWindow(QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setWindowTitle('One Line')
@@ -54,6 +55,7 @@ class MainWindow(QWidget):
         mw_layout.setContentsMargins(2,2,2,2)
         self.setLayout(mw_layout)
 
+# For test purpose only      
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = MainWindow()

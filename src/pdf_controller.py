@@ -1,5 +1,4 @@
 import io
-import os
 from PyPDF2 import PdfReader, PdfWriter
 
 available_files = dict()

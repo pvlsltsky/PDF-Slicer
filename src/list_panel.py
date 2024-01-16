@@ -5,7 +5,7 @@ from PySide6.QtGui import QPixmap, QPainter, QColor
 from PySide6.QtCore import Qt, QRect
 import sys
 import os.path
-from controller import checkPdfDonor, compose_to_file
+from pdf_controller import checkPdfDonor, compose_to_file
 from functools import partial
 from pdf_view import PDFPanel
 
@@ -63,7 +63,9 @@ class MyTreeWidget(QTreeWidget):
         self.new_pdf_row.setExpanded(True)
         self.itemExpanded.connect(self.handleItemExpanded)
         # PDF icon
-        image_path = "./resources/pdf_color_2.png"
+        image_dir = os.path.dirname(__file__)
+        image_path = os.path.relpath(os.path.join(image_dir, "../resources/pdf_color_2.png"))
+        print(image_path)
         pixmap = QPixmap(image_path)
         icon_lbl = QLabel()
         icon_lbl.setPixmap(pixmap.scaledToWidth(30, Qt.TransformationMode.FastTransformation))

@@ -1,4 +1,5 @@
 import io
+import os
 from PyPDF2 import PdfReader, PdfWriter
 
 available_files = dict()
@@ -56,4 +57,3 @@ def compose_to_buffer(list_of_donors) -> bytearray:
     except:
         # print("PDF stream creation failed")
         return None
-    

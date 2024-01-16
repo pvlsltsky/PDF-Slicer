@@ -31,7 +31,7 @@ class MyTreeWidget(QTreeWidget):
         self.setColumnWidth(3, 60)
         self.setColumnWidth(4, 60)
         self.setColumnWidth(5, 70)
-        # self.header().setHidden(True)
+
         # Populate the tree with initial header row and ADD input row
         self.setupTreeData()
 
@@ -41,8 +41,8 @@ class MyTreeWidget(QTreeWidget):
         self.setDragDropMode(QTreeWidget.DragDropMode.InternalMove)
 
         self.pdf_panel = pdf_panel
-        # Connect the custom slot to the selectionChanged signal
-        # Needed to prevent header line and input line from selection
+
+        # To prevent header line and input line from selection
         self.selectionModel().selectionChanged.connect(self.handleSelectionChange)
 
         self.itemPressed.connect(self.onItemPressed)
@@ -109,12 +109,10 @@ class MyTreeWidget(QTreeWidget):
         self.setItemWidget(self.init_row, 2, self.init_file_dlg_btn)
         # pages from selector
         self.init_pages_from = QSpinBox(self)
-        # self.init_pages_from.setPrefix("Pages from: ")
         self.init_pages_from.valueChanged.connect(self.updateTo)
         self.setItemWidget(self.init_row, 3, self.init_pages_from)
         # pages to selector
         self.init_pages_to = QSpinBox(self)
-        # self.init_pages_to.setPrefix("to: ")
         self.setItemWidget(self.init_row, 4, self.init_pages_to)
         self.init_pages_to.valueChanged.connect(self.calculateInitTotal)
         # total label
@@ -316,13 +314,9 @@ class MyTreeWidget(QTreeWidget):
         if isinstance(self.pdf_panel, PDFPanel):
                 self.pdf_panel.refreshView(self.buildList())        
 
+# For test purposes only
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-
-    # Create your custom tree widget
     my_tree_widget = MyTreeWidget()
-
-    # Show the tree widget
     my_tree_widget.show()
-
     sys.exit(app.exec())

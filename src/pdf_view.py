@@ -3,7 +3,7 @@ from PySide6.QtGui import QResizeEvent
 from PySide6.QtWidgets import (QApplication, QWidget, QFormLayout,
                                QGroupBox, QVBoxLayout)
 
-from PySide6.QtCore import Qt, QBuffer, QByteArray, QIODevice
+from PySide6.QtCore import QBuffer, QByteArray, QIODevice
 from PySide6.QtPdfWidgets import QPdfView
 from PySide6.QtPdf import QPdfDocument
 
@@ -28,9 +28,9 @@ class PDFPanel(QGroupBox):
         diff = self.width() - self.pdf_view.width()
         if diff > 16:
             self.pdf_view.setGeometry(self.x() + 8, 
-                                    self.pdf_view.y(),
-                                    self.width() - 16,
-                                    self.pdf_view.height()) 
+                                      self.pdf_view.y(),
+                                      self.width() - 16,
+                                      self.pdf_view.height()) 
             
     def refreshView(self, list_of_donors):
         barr = compose_to_buffer(list_of_donors)

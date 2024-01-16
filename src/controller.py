@@ -1,6 +1,5 @@
 import io
 from PyPDF2 import PdfReader, PdfWriter
-from PyPDF2._utils import StrByteType
 
 available_files = dict()
 
@@ -17,20 +16,9 @@ def checkPdfDonor(fullpath : str) -> int:
         except:
             return 0    
     return res
-        
-def testPdfBuffer() -> bytearray:
-    writer = PdfWriter()
-    fullpath = "/Users/pavelslutsky/Downloads/tofes1514---spitted.pdf"
-    reader = PdfReader(fullpath)
-    writer.append(reader, [2, 0, 1, 2, 0])
-    output = io.BytesIO()
-    writer.write(output)
-    output.seek(0)
-    return output.read()
 
 def compose(list_of_donors) -> PdfWriter:
     if len(list_of_donors) > 0:
-        # print(list_of_donors)
         merger = PdfWriter()
         # add the pages of donor documents to output
         for (file, pf, pt) in list_of_donors:
@@ -52,7 +40,7 @@ def compose_to_file(list_of_donors, fullpath) -> bytearray:
         else:
             return False
     except:
-        print("PDF file creation failed")
+        # print("PDF file creation failed")
         return False
 
 def compose_to_buffer(list_of_donors) -> bytearray:
@@ -66,11 +54,6 @@ def compose_to_buffer(list_of_donors) -> bytearray:
         else:
             return None
     except:
-        print("PDF stream creation failed")
+        # print("PDF stream creation failed")
         return None
-
-if __name__ == "__main__":
-    ld = [("/Users/pavelslutsky/Documents/download.pdf", 2, 2), ("/Users/pavelslutsky/Documents/download.pdf", 1, 1)]
-    # ld = [("/Users/pavelslutsky/Documents/download.pdf", 2, 2)]
-    compose_to_file(ld, "/Users/pavelslutsky/Documents/test4.pdf")
-    pass
+    

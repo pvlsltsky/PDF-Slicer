@@ -1,9 +1,17 @@
 import io
+import sys
+import os.path
 from PyPDF2 import PdfReader, PdfWriter
 
 available_files = dict()
 
 slicer_lines = []
+
+class PdfSliceData():
+    def __init__(self, fullpath : str) -> None:
+        reader = PdfReader(fullpath)
+        self.fullpath = fullpath
+        self.max_pages = reader.pages
 
 def checkPdfDonor(fullpath : str) -> int:
     res = available_files.get(fullpath, 0)
@@ -27,23 +35,22 @@ def compose(list_of_donors) -> PdfWriter:
     else:
         return None
 
-def compose_to_file(list_of_donors, fullpath) -> bytearray:
+def composeToFile(list_of_donors, fullpath) -> bytearray:
     try:
+        merger = compose(list_of_donors)
         if isinstance(merger, PdfWriter):
-            merger = compose(list_of_donors)
             output = open(fullpath, "wb")
             merger.write(output)
             # Close File Descriptors
             merger.close()
             output.close()
-            return True
+            return f"Succsessfully saved to {fullpath}"
         else:
-            return False
-    except:
-        # print("PDF file creation failed")
-        return False
+            return f"Error in initialization PDF writer"
+    except Exception as ex:
+        return f"Error: {ex}"
 
-def compose_to_buffer(list_of_donors) -> bytearray:
+def composeToBuffer(list_of_donors) -> bytearray:
     try:
         merger = compose(list_of_donors)
         if isinstance(merger, PdfWriter):

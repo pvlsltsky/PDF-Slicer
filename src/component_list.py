@@ -71,14 +71,25 @@ class ComponentList(QTreeWidget, StatusUpdater):
         self.setColumnWidth(4, 60)
         self.setColumnWidth(5, 70)
 
+    def firstPageIndex(self, row_idx : int):
+        if row_idx < self.topLevelItemCount():
+            pages_till_row_idx = 0
+            for i in range(row_idx):
+                try: 
+                    pages_till_row_idx  += int(self.topLevelItem(i).text(5).split()[0])
+                except:
+                    self.setStatusText(f"Error in line {i + 1}")
+            return pages_till_row_idx
+        return None
+
     @Slot(QItemSelection, QItemSelection)
     def handleSelectionChange(self, selected : QItemSelection, deselected : QItemSelection):
         if selected.count():
             self.attachDonorControls(self.topLevelItem(selected.indexes()[0].row()))
+            self.moveFocusToPagePdfView(self.firstPageIndex(selected.indexes()[0].row()))
         if deselected.count():
             self.detachDonorControls(self.topLevelItem(deselected.indexes()[0].row()))
-        self.moveFocusToPagePdfView(selected.indexes()[0].row())
-    
+
     @Slot(str)
     def addNewDonor(self, fullpath : str) -> None:
         donor= QTreeWidgetItem([chr(10008), chr(9901),  fullpath, "1", "1", "1 page"])
@@ -173,7 +184,7 @@ class ComponentList(QTreeWidget, StatusUpdater):
     def handleRemoveBtnClicked(self, donor : QTreeWidgetItem) -> None:
         index = self.indexOfTopLevelItem(donor)
         self.takeTopLevelItem(index)
-        self.setSaveButtonEnabled(self.topLevelItemCount() == 0)
+        self.setSaveButtonEnabled(self.topLevelItemCount() != 0)
         self.updateToolTipMsg()
         self.updatePdfView(self.listOfDonors())
 

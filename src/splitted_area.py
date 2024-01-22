@@ -17,8 +17,7 @@ class MainBox(QGroupBox, StatusUpdater):
         self.inner_widget = ListComposerPanel(self)
         layout.addWidget(self.inner_widget)
         layout.setContentsMargins(2,2,2,2)
-        self.setStatusTip("Main box")
-        self.setStatusText("Main box initialized")
+        self.setStatusTip("Use this panel to create donor files list")
 
 class PDFViewerBox(QGroupBox, StatusUpdater):
     def __init__(self, parent):
@@ -29,22 +28,16 @@ class PDFViewerBox(QGroupBox, StatusUpdater):
         layout.addWidget(self.inner_widget)
         layout.setContentsMargins(2,2,2,2)
         self.setStatusTip("PDF preview")
-        self.setStatusText("PDF viewer box initialized")
-    
-    def getInnerWidget(self):
-        # return self.inner_widget
-        return None
 
 class MainWindowSplitted(QWidget, StatusUpdater):
     def __init__(self, parent):
         super().__init__(parent)
-        self.setStatusText("Splitted area initializing...")
         d_layout = QGridLayout()
         self.setLayout(d_layout)
 
         self.splitter = QSplitter(self)
         self.pdf_box = PDFViewerBox(self)
-        self.main_box = MainBox(self, self.pdf_box.getInnerWidget())
+        self.main_box = MainBox(self)
         self.splitter.addWidget(self.main_box)
         self.splitter.addWidget(self.pdf_box)
 
@@ -55,11 +48,6 @@ class MainWindowSplitted(QWidget, StatusUpdater):
         self.main_box.inner_widget.setRefreshPdfDelegate(self.pdf_box.inner_widget.refreshView)
         self.main_box.inner_widget.setMovePdfViewFocus(self.pdf_box.inner_widget.jumpToPage)
         self.main_box.inner_widget.setPreviewPdfDelegate(self.pdf_box.inner_widget.setPdfDoc)
-
-        # # for test >
-        # pdfViewSetPdf = self.pdf_box.inner_widget.setPdfDoc
-        # pdfViewSetPdf("/Users/pavelslutsky/Library/CloudStorage/GoogleDrive-pvlsltsky@gmail.com/My Drive/Documents/Medical docs/Finger break/Med_case.pdf")
-        # # < for test
 
     def resizeEvent(self, event: QResizeEvent) -> None:
         res = super().resizeEvent(event) 

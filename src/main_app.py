@@ -4,7 +4,6 @@ from PySide6.QtCore import Slot
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication, QMainWindow, QLabel
 from splitted_area import MainWindowSplitted
-from pdf_controller import resourcePath
 
 user_dir = os.path.expanduser("~")
 
@@ -16,6 +15,7 @@ class PDFMergerMainWindow(QMainWindow):
         splitted_area = MainWindowSplitted(self)
         self.setCentralWidget(splitted_area)
         self.setWindowTitle('PDF Merger')
+        self.setStatusText("Ready")
     
     @Slot(str)
     def setStatusText(self, msg : str):
@@ -25,5 +25,6 @@ if __name__ == '__main__':
 
     app = QApplication(sys.argv)
     window = PDFMergerMainWindow()
+    window.resize(800, 400)
     window.show()
     sys.exit(app.exec())

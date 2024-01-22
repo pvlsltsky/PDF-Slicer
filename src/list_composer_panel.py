@@ -57,7 +57,8 @@ class InputBox(QGroupBox, StatusUpdater):
     def handleAddToListClicked(self):
         self.addToList(self.__file_path_txt.text())
 
-class ListComposerPanel(QGroupBox, StatusUpdater):
+# class ListComposerPanel(QGroupBox, StatusUpdater):
+class ListComposerPanel(QWidget, StatusUpdater):
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -99,7 +100,7 @@ class ListComposerPanel(QGroupBox, StatusUpdater):
         self.__save_btn.setEnabled(bool)      
 
     def setPreviewPdfDelegate(self, pdfViewPrevieMethod):
-        self.__input_box.addToList = pdfViewPrevieMethod
+        self.__input_box.previewPDF = pdfViewPrevieMethod
 
     def setRefreshPdfDelegate(self, pdfViewRefreshMethod):
         self.__comp_list.updatePdfView = pdfViewRefreshMethod

@@ -1,0 +1,12 @@
+
+pyinstaller --onefile \
+            --windowed \
+            --name="PDF Merger" \
+            --icon="icons/icon.png" \
+            --paths ".venv/lib/python3.11/site-packages" \
+            --hidden-import PySide6 \
+            --hidden-import PyPDF2 \
+            --add-data="icons/logo200.ico:./icons" \
+            --add-data="icons/copy24.png:./icons" \
+            --add-data="icons/delete24.png:./icons" \
+            "src/main_app.py"

@@ -5,10 +5,10 @@ from functools import partial
 from PySide6.QtWidgets import (QApplication, QTreeWidget, QTreeWidgetItem,
                                QHeaderView, QLabel, QPushButton, QStyledItemDelegate,
                                QFileDialog, QSpinBox,QButtonGroup)
-from PySide6.QtGui import QPixmap, QPainter, QColor
+from PySide6.QtGui import QPixmap, QPainter, QColor, QIcon
 from PySide6.QtCore import Qt, Slot, QRect, QItemSelection
 
-from pdf_controller import checkPdfDonor
+from pdf_controller import checkPdfDonor, resource_path
 from status_updater import StatusUpdater
 
 class CustomStyleDelegate(QStyledItemDelegate):
@@ -45,6 +45,7 @@ class ComponentList(QTreeWidget, StatusUpdater):
         self.setSelectionMode(QTreeWidget.SelectionMode.SingleSelection)
         self.selectionModel().selectionChanged.connect(self.handleSelectionChange)
         self.setItemsExpandable(False)
+        self.default_text_color = None 
         # delegates
         self.setSaveButtonEnabled = lambda x : None
         self.updatePdfView = lambda x : None
@@ -63,7 +64,8 @@ class ComponentList(QTreeWidget, StatusUpdater):
         self.setStyleSheet(""" * { show-decoration-selected: 0; }
                            QHeaderView::section { border: 0px; } 
                            QTreeView::item {height: 30px;}
-                           QTreeView::item:selected {background: grey;}""")
+                           QTreeView::item:selected {background: grey;}
+                           QTreeView::item:selected {color: black;}""")
         self.setColumnWidth(0, 50)
         self.setColumnWidth(1, 30)
         self.setColumnWidth(2, 200)
@@ -84,18 +86,22 @@ class ComponentList(QTreeWidget, StatusUpdater):
 
     @Slot(QItemSelection, QItemSelection)
     def handleSelectionChange(self, selected : QItemSelection, deselected : QItemSelection):
-        if selected.count():
-            self.attachDonorControls(self.topLevelItem(selected.indexes()[0].row()))
-            self.moveFocusToPagePdfView(self.firstPageIndex(selected.indexes()[0].row()))
+        # if selected.count():
+        #     self.attachDonorControls(self.topLevelItem(selected.indexes()[0].row()))
+        #     self.moveFocusToPagePdfView(self.firstPageIndex(selected.indexes()[0].row()))
+        if self.currentItem():
+            self.attachDonorControls(self.topLevelItem(self.currentIndex().row()))
+            self.moveFocusToPagePdfView(self.firstPageIndex(self.currentIndex().row()))
         if deselected.count():
             self.detachDonorControls(self.topLevelItem(deselected.indexes()[0].row()))
 
     @Slot(str)
     def addNewDonor(self, fullpath : str) -> None:
-        donor= QTreeWidgetItem([chr(10008), chr(9901),  fullpath, "1", "1", "1 page"])
+        donor= QTreeWidgetItem(["", "-",  fullpath, "1", "1", "1 page"])
         donor.setTextAlignment(0, Qt.AlignmentFlag.AlignCenter)
         donor.setTextAlignment(1, Qt.AlignmentFlag.AlignCenter)
         self.addTopLevelItem(donor)
+        donor.setText(0, str(self.indexOfTopLevelItem(donor) + 1))
         donor.setToolTip(2, fullpath)
         self.setSaveButtonEnabled(True)
         self.updateToolTipMsg()
@@ -127,26 +133,27 @@ class ComponentList(QTreeWidget, StatusUpdater):
         self.updatePdfView(self.listOfDonors())
 
     def attachDonorControls(self, _donor : QTreeWidgetItem):
-
         if __name__ != "__main__":
             max_pages = checkPdfDonor(_donor.text(2))
         else:
             max_pages = 15 # for test purposes
-
         # remove button
         _donor.setText(0, "")
-        donor_del_btn = QPushButton(chr(10008))
+        donor_del_btn = QPushButton("")
+        donor_del_btn.setIcon(QPixmap(resource_path("icons/delete24.png")))
         donor_del_btn.setToolTip("Remove row")
         donor_del_btn.clicked.connect(partial(self.handleRemoveBtnClicked, _donor))
         self.setItemWidget(_donor, 0, donor_del_btn)
         # copy button
         _donor.setText(1, "")
-        donor_cpy_btn = QPushButton(chr(9901))
+        donor_cpy_btn = QPushButton("")
+        donor_cpy_btn.setIcon(QPixmap(resource_path("icons/copy24.png")))
         donor_cpy_btn.setToolTip("Copy row")
         donor_cpy_btn.clicked.connect(partial(self.handleCopyDataClicked, _donor))
         self.setItemWidget(_donor, 1, donor_cpy_btn)
         # pages from selector
         pages_from = QSpinBox(self)
+        pages_from.setStyleSheet('background-color: grey; color: black;')
         try:
             pages_from.setValue(int(_donor.text(3)))
         except:
@@ -157,6 +164,7 @@ class ComponentList(QTreeWidget, StatusUpdater):
         self.setItemWidget(_donor, 3, pages_from)
         # pages to selector
         pages_to = QSpinBox(self)
+        pages_to.setStyleSheet('background-color: grey; color: black;')
         try:
             pages_to.setValue(int(_donor.text(4)))
         except:
@@ -165,14 +173,13 @@ class ComponentList(QTreeWidget, StatusUpdater):
         pages_to.setMinimum(1)
         pages_to.setMaximum(max_pages)
         self.setItemWidget(_donor, 4, pages_to)
-
         pages_from.valueChanged.connect(partial(self.updatePages, _donor, pages_from, pages_to))
         pages_to.valueChanged.connect(partial(self.updatePages, _donor, pages_from, pages_to))
 
     def detachDonorControls(self, _donor : QTreeWidgetItem):
         # detach controls of donor line 
-        _donor.setText(0, chr(10008))
-        _donor.setText(1, chr(9901))
+        _donor.setText(0, str(self.indexOfTopLevelItem(_donor) + 1))
+        _donor.setText(1, "-")
         _donor.setText(3, str(self.itemWidget(_donor, 3).value()))
         _donor.setText(4, str(self.itemWidget(_donor, 4).value()))
         self.setItemWidget(_donor, 0, None)
@@ -180,11 +187,17 @@ class ComponentList(QTreeWidget, StatusUpdater):
         self.setItemWidget(_donor, 3, None)
         self.setItemWidget(_donor, 4, None)
 
+    def updateIndexes(self):
+        for i in range(self.topLevelItemCount()):
+            if not self.topLevelItem(i).isSelected():
+                self.topLevelItem(i).setText(0, str(i + 1))
+
     @Slot(QTreeWidgetItem)
     def handleRemoveBtnClicked(self, donor : QTreeWidgetItem) -> None:
         index = self.indexOfTopLevelItem(donor)
         self.takeTopLevelItem(index)
         self.setSaveButtonEnabled(self.topLevelItemCount() != 0)
+        self.updateIndexes()
         self.updateToolTipMsg()
         self.updatePdfView(self.listOfDonors())
 
@@ -193,11 +206,12 @@ class ComponentList(QTreeWidget, StatusUpdater):
         # handling copy button click
         index = self.indexOfTopLevelItem(donor)
         copied_donor = donor.clone()
-        copied_donor.setText(0, chr(10008))
-        copied_donor.setText(1, chr(9901))
+        copied_donor.setText(1, "-")
         copied_donor.setText(3, str(self.itemWidget(donor, 3).value()))
         copied_donor.setText(4, str(self.itemWidget(donor, 4).value()))
         self.insertTopLevelItem(index + 1, copied_donor)
+        copied_donor.setText(0, str(self.indexOfTopLevelItem(copied_donor) + 1))
+        self.updateIndexes()
         self.updateToolTipMsg()
         self.updatePdfView(self.listOfDonors())
 
@@ -273,7 +287,7 @@ class ComponentList(QTreeWidget, StatusUpdater):
                 self.topLevelItem(i).setSelected(False)
             self.updatePdfView(self.listOfDonors())
             dragged_item.setSelected(True)
-            
+            self.updateIndexes()
 
         self.drop_to_item = None
         self.drop_position = None
